@@ -1,0 +1,25 @@
+{
+  "name": "geodeels-shop",
+  "version": "1.0.0",
+  "description": "Geodeels customer shop – high-grade cleaning & disinfectant chemicals for Nigeria",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/geosan11/geodeels-shop.git"
+  },
+  "author": "Geodeels",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.0"
+  }
+}
