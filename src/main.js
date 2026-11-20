@@ -137,10 +137,12 @@ export function renderApp() {
         ? `
       <div class="demo-banner" role="status" aria-live="polite">
         <div class="demo-banner-content">
-          <span class="demo-banner-pill">Demo Mode</span>
-          <span>Showing ${state.products.length} sample catalog ${state.products.length === 1 ? 'item' : 'items'} for testing. These are not live inventory.</span>
+          <span class="demo-banner-pill">Demo</span>
+          <span class="demo-banner-text">
+            <span class="demo-text-desktop">Showing </span>${state.products.length} sample catalog ${state.products.length === 1 ? 'item' : 'items'}<span class="demo-text-desktop"> for testing</span>
+          </span>
         </div>
-        <a href="/" class="demo-banner-exit" id="exit-demo-link" aria-label="Switch to live store">Exit Demo</a>
+        <a href="/" class="demo-banner-exit" id="exit-demo-link" aria-label="Exit demo mode">Exit Demo</a>
       </div>
     `
         : ''
@@ -181,13 +183,11 @@ export function renderApp() {
     </header>
 
     <main class="page-container" id="main-content">
-      <!-- Clean Hero Value Card -->
+      <!-- Clean White Hero Value Card -->
       <section class="hero-section" aria-label="Overview">
         <div class="hero-card">
           <div class="hero-content">
-            <div class="hero-pill">
-              <span>Geodeels</span>
-            </div>
+            <span class="hero-eyebrow">Geodeels</span>
             <h1 class="hero-title">Hygiene &amp; Disinfectant Chemicals</h1>
             <p class="hero-desc">
               Reliable cleaning and disinfectant chemicals for Nigerian households, offices, hotels, and businesses. Fixed factory pricing.
@@ -200,56 +200,59 @@ export function renderApp() {
         </div>
       </section>
 
-      <!-- Search & Filters -->
-      <section class="controls-section" aria-label="Catalog Search and Filter">
-        <div class="search-input-wrapper">
-          <span class="search-icon-left" aria-hidden="true">${ICONS.search}</span>
-          <input
-            type="search"
-            id="catalog-search"
-            class="search-input"
-            placeholder="${searchPlaceholder}"
-            value="${escapeHtml(state.searchQuery)}"
-            aria-label="Search chemical products"
-          />
-          ${
-            state.searchQuery
-              ? `
-            <button
-              type="button"
-              class="search-clear-btn"
-              id="clear-search-btn"
-              aria-label="Clear search input"
-            >
-              ${ICONS.clear}
-            </button>
-          `
-              : ''
-          }
-        </div>
-      </section>
-
-      <!-- Category Chips Bar (Mobile Tap Target >= 44px) -->
-      <nav class="categories-section" aria-label="Product Categories">
-        <ul class="categories-list" role="tablist">
-          ${CATEGORIES.map(
-            (cat) => `
-            <li role="presentation">
+      <!-- Catalog Toolbar (Search + Category Chips) -->
+      <div class="catalog-toolbar">
+        <!-- Search & Filters -->
+        <section class="controls-section" aria-label="Catalog Search and Filter">
+          <div class="search-input-wrapper">
+            <span class="search-icon-left" aria-hidden="true">${ICONS.search}</span>
+            <input
+              type="search"
+              id="catalog-search"
+              class="search-input"
+              placeholder="${searchPlaceholder}"
+              value="${escapeHtml(state.searchQuery)}"
+              aria-label="Search chemical products"
+            />
+            ${
+              state.searchQuery
+                ? `
               <button
                 type="button"
-                role="tab"
-                class="category-chip ${state.currentCategory === cat ? 'active' : ''}"
-                data-category="${escapeHtml(cat)}"
-                aria-selected="${state.currentCategory === cat}"
-                aria-label="Show ${escapeHtml(cat)} products"
+                class="search-clear-btn"
+                id="clear-search-btn"
+                aria-label="Clear search input"
               >
-                ${escapeHtml(cat)}
+                ${ICONS.clear}
               </button>
-            </li>
-          `
-          ).join('')}
-        </ul>
-      </nav>
+            `
+                : ''
+            }
+          </div>
+        </section>
+
+        <!-- Category Chips Bar (Mobile Tap Target >= 44px) -->
+        <nav class="categories-section" aria-label="Product Categories">
+          <ul class="categories-list" role="tablist">
+            ${CATEGORIES.map(
+              (cat) => `
+              <li role="presentation">
+                <button
+                  type="button"
+                  role="tab"
+                  class="category-chip ${state.currentCategory === cat ? 'active' : ''}"
+                  data-category="${escapeHtml(cat)}"
+                  aria-selected="${state.currentCategory === cat}"
+                  aria-label="Show ${escapeHtml(cat)} products"
+                >
+                  ${escapeHtml(cat)}
+                </button>
+              </li>
+            `
+            ).join('')}
+          </ul>
+        </nav>
+      </div>
 
       <!-- Catalog Section -->
       <section class="catalog-section" aria-label="Product Catalog">

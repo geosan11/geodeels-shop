@@ -226,3 +226,50 @@ describe('Brand specifications and true claims compliance', () => {
     expect(pluralize(0)).toBe('0 items');
   });
 });
+
+describe('Shop P1 specification compliance', () => {
+  it('implements white hero card with neutral surface, dark text, and #196C36 accents', () => {
+    const stylePath = path.resolve(__dirname, '../src/style.css');
+    const styleContent = fs.readFileSync(stylePath, 'utf8');
+    const mainJsPath = path.resolve(__dirname, '../src/main.js');
+    const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
+
+    // Hero markup includes green-tint eyebrow and neutral trust badges
+    expect(mainJsContent).toContain('hero-eyebrow');
+    expect(mainJsContent).toContain('Fixed factory pricing');
+    expect(mainJsContent).toContain('One price for everyone');
+
+    // Hero CSS uses card background #FFFFFF, dark text #0F172A, #475569, and accent #196C36
+    expect(styleContent).toContain('.hero-card');
+    expect(styleContent).toContain('var(--color-card-bg, #FFFFFF)');
+    expect(styleContent).toContain('var(--color-text-main, #0F172A)');
+    expect(styleContent).toContain('var(--color-text-secondary, #475569)');
+    expect(styleContent).toContain('.hero-eyebrow');
+    expect(styleContent).toContain('var(--color-brand-primary, #196C36)');
+  });
+
+  it('implements slim slate #1E293B demo bar with single line on mobile', () => {
+    const stylePath = path.resolve(__dirname, '../src/style.css');
+    const styleContent = fs.readFileSync(stylePath, 'utf8');
+    const mainJsPath = path.resolve(__dirname, '../src/main.js');
+    const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
+
+    expect(styleContent).toContain('var(--color-demo-bar-bg, #1E293B)');
+    expect(styleContent).toContain('var(--color-demo-bar-text, #F8FAFC)');
+    expect(mainJsContent).toContain('demo-banner-pill');
+    expect(mainJsContent).toContain('exit-demo-link');
+    expect(mainJsContent).toContain('Exit Demo');
+  });
+
+  it('unifies catalog toolbar on desktop (>=1024px) for search and category chips in one row', () => {
+    const stylePath = path.resolve(__dirname, '../src/style.css');
+    const styleContent = fs.readFileSync(stylePath, 'utf8');
+    const mainJsPath = path.resolve(__dirname, '../src/main.js');
+    const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
+
+    expect(mainJsContent).toContain('catalog-toolbar');
+    expect(styleContent).toContain('@media (min-width: 1024px)');
+    expect(styleContent).toContain('.catalog-toolbar');
+    expect(styleContent).toContain('flex-direction: row');
+  });
+});
