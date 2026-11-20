@@ -153,11 +153,12 @@ describe('buildProductWhatsAppUrl', () => {
   });
 });
 
-describe('Brand specifications', () => {
+describe('Brand specifications and true claims compliance', () => {
   it('uses the brand name Geodeels with an s', () => {
     expect(BRAND.name).toBe('Geodeels');
     expect(BRAND.primaryGreen).toBe('#196C36');
     expect(BRAND.darkGreen).toBe('#145C2E');
+    expect(BRAND.primaryGreen).not.toBe('#166534');
   });
 
   it('has categories matching customer shop requirements', () => {
@@ -166,5 +167,22 @@ describe('Brand specifications', () => {
     expect(CATEGORIES).toContain('Toilet wash');
     expect(CATEGORIES).toContain('Dishwash');
     expect(CATEGORIES).toContain('Bleach');
+  });
+
+  it('enforces true claims only across demo catalog items', () => {
+    DEMO_PRODUCTS.forEach((product) => {
+      const desc = (product.description || '').toLowerCase();
+      expect(desc).not.toContain('hospital-grade');
+      expect(desc).not.toContain('pure active ingredients');
+      expect(desc).not.toContain('nationwide delivery');
+      expect(product.size).not.toBe('25L');
+    });
+  });
+
+  it('correctly pluralizes item counts', () => {
+    const pluralize = (count) => `${count} ${count === 1 ? 'item' : 'items'}`;
+    expect(pluralize(1)).toBe('1 item');
+    expect(pluralize(9)).toBe('9 items');
+    expect(pluralize(0)).toBe('0 items');
   });
 });

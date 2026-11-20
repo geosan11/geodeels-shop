@@ -93,7 +93,7 @@ export const DEMO_PRODUCTS = [
     stock: 45,
     active: true,
     is_sample: true,
-    description: 'Hospital-grade antiseptic germicide and surface disinfectant. Formulated for high-touch surface hygiene.',
+    description: 'Antiseptic germicide and surface disinfectant. Formulated for high-touch surface hygiene.',
     photo_url: '/products/dis-germ.svg'
   },
   {
