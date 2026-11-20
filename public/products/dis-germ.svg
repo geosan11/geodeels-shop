@@ -37,7 +37,7 @@
     <!-- Light Sheen Reflection -->
     <path d="M152 170 L152 320 C152 328 156 335 160 335 L164 335 L164 170 Z" fill="#FFFFFF" opacity="0.25"/>
 
-    <!-- Hospital Cross / Medical Shield Label -->
+    <!-- Medical Shield Label -->
     <rect x="154" y="175" width="92" height="130" rx="8" fill="#FFFFFF"/>
     <rect x="154" y="175" width="92" height="24" rx="8" fill="#196C36"/>
     <rect x="154" y="190" width="92" height="9" fill="#196C36"/>
@@ -47,9 +47,7 @@
     <rect x="194" y="206" width="12" height="24" rx="2" fill="#196C36"/>
     <rect x="188" y="212" width="24" height="12" rx="2" fill="#196C36"/>
 
-    <text x="200" y="248" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="13" fill="#145C2E" text-anchor="middle">DIS-GERM</text>
-    <text x="200" y="262" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="8" fill="#4B5563" text-anchor="middle">ANTISEPTIC FLUID</text>
-    <rect x="165" y="272" width="70" height="18" rx="9" fill="#EBF5EE"/>
-    <text x="200" y="284" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="8" fill="#196C36" text-anchor="middle">SURFACE &amp; SKIN</text>
+    <text x="200" y="254" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="14" fill="#145C2E" text-anchor="middle">DIS-GERM</text>
+    <text x="200" y="272" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="9" fill="#4B5563" text-anchor="middle">ANTISEPTIC FLUID</text>
   </g>
 </svg>

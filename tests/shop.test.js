@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   formatPrice,
   DEMO_PRODUCTS,
@@ -175,8 +177,46 @@ describe('Brand specifications and true claims compliance', () => {
       expect(desc).not.toContain('hospital-grade');
       expect(desc).not.toContain('pure active ingredients');
       expect(desc).not.toContain('nationwide delivery');
+      expect(desc).not.toContain('direct factory supply');
+      expect(desc).not.toContain('factory-direct');
+      expect(desc).not.toContain('99.9');
+      expect(desc).not.toContain('99.9% sanitising');
+      expect(desc).not.toContain('kills');
+      expect(desc).not.toContain('pathogen');
       expect(product.size).not.toBe('25L');
     });
+  });
+
+  it('ensures product SVG label artwork is free of unconfirmed marketing and efficacy claims', () => {
+    const svgDir = path.resolve(__dirname, '../public/products');
+    const svgFiles = fs.readdirSync(svgDir).filter((file) => file.endsWith('.svg'));
+    expect(svgFiles.length).toBeGreaterThanOrEqual(5);
+
+    svgFiles.forEach((file) => {
+      const content = fs.readFileSync(path.join(svgDir, file), 'utf8');
+      expect(content).not.toContain('99.9');
+      expect(content).not.toContain('99.9%');
+      expect(content.toLowerCase()).not.toContain('sanitising');
+      expect(content.toLowerCase()).not.toContain('hospital-grade');
+      expect(content.toLowerCase()).not.toContain('direct factory supply');
+      expect(content.toLowerCase()).not.toContain('factory-direct');
+      expect(content).not.toContain('3.5%');
+    });
+  });
+
+  it('ensures unconfirmed claims ("Direct factory supply", "Factory-direct sanitation") are absent from UI markup', () => {
+    const mainJsPath = path.resolve(__dirname, '../src/main.js');
+    const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
+
+    expect(mainJsContent).not.toContain('Direct factory supply');
+    expect(mainJsContent).not.toContain('Factory-Direct Sanitation');
+    expect(mainJsContent).not.toContain('Factory-direct');
+    expect(mainJsContent).not.toContain('99.9%');
+    expect(mainJsContent.toLowerCase()).not.toContain('hospital-grade');
+
+    // Confirm required confirmed claims are preserved
+    expect(mainJsContent).toContain('Fixed factory pricing');
+    expect(mainJsContent).toContain('One price for everyone');
   });
 
   it('correctly pluralizes item counts', () => {

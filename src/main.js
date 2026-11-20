@@ -186,8 +186,7 @@ export function renderApp() {
         <div class="hero-card">
           <div class="hero-content">
             <div class="hero-pill">
-              ${ICONS.shield}
-              <span>Factory-Direct Sanitation</span>
+              <span>Geodeels</span>
             </div>
             <h1 class="hero-title">Hygiene &amp; Disinfectant Chemicals</h1>
             <p class="hero-desc">
@@ -196,7 +195,6 @@ export function renderApp() {
             <div class="hero-badges">
               <span class="hero-badge-item">${ICONS.check} Fixed factory pricing</span>
               <span class="hero-badge-item">${ICONS.check} One price for everyone</span>
-              <span class="hero-badge-item">${ICONS.check} Direct factory supply</span>
             </div>
           </div>
         </div>
@@ -337,7 +335,7 @@ export function renderApp() {
             <img src="/logo-geodeels.png" alt="Geodeels" class="footer-logo" width="36" height="36" />
             <p class="footer-copy">
               <strong>${BRAND.name}</strong> • High-grade hygiene &amp; cleaning chemicals.<br />
-              Lagos, Nigeria • Direct factory supply.
+              Lagos, Nigeria.
             </p>
           </div>
           <div class="footer-links">
