@@ -51,3 +51,43 @@ export async function fetchStorefrontProducts() {
     return { data: [], error: err, isFallback: true };
   }
 }
+
+/**
+ * Attempt to record an order into shop_orders table if it exists.
+ * Does not throw and does not block the customer if table does not exist.
+ * @param {{ customerName: string, customerPhone: string, product: object }} orderData
+ * @returns {Promise<{ data: object|null, error: Error|null }>}
+ */
+export async function createShopOrder({ customerName, customerPhone, product }) {
+  if (!supabase) {
+    return { data: null, error: new Error('Supabase client is not configured') };
+  }
+
+  try {
+    const { data, error } = await supabase.from('shop_orders').insert({
+      customer_name: customerName,
+      customer_phone: customerPhone,
+      items: [
+        {
+          product_id: product?.id || null,
+          name: product?.name || '',
+          size: product?.size || '',
+          price_ngn: product?.price_ngn || 0,
+          quantity: 1
+        }
+      ],
+      total_ngn: product?.price_ngn || 0,
+      status: 'new'
+    });
+
+    if (error) {
+      console.warn('Could not insert into shop_orders:', error.message);
+      return { data: null, error };
+    }
+
+    return { data, error: null };
+  } catch (err) {
+    console.warn('Exception during shop_orders insert:', err);
+    return { data: null, error: err };
+  }
+}
