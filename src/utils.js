@@ -4,7 +4,7 @@
 
 export const BRAND = {
   name: 'Geodeels',
-  tagline: 'High-Grade Hygiene & Cleaning Solutions',
+  tagline: 'Hygiene & Cleaning Chemicals',
   primaryGreen: '#196C36',
   darkGreen: '#145C2E',
   phone: '2348000000000', // Default sales phone
@@ -33,7 +33,7 @@ export const DEMO_PRODUCTS = [
     stock: 50,
     active: true,
     is_sample: true,
-    description: 'High-potency concentrated disinfectant and germicide for deep cleaning, sanitation, and odour control in homes, clinics, and offices.',
+    description: 'Izal Germicide 4L',
     photo_url: '/products/izal.svg'
   },
   {
@@ -45,7 +45,7 @@ export const DEMO_PRODUCTS = [
     stock: 65,
     active: true,
     is_sample: true,
-    description: 'Household-size germicidal disinfectant fluid for floors, drains, and outdoor surrounds.',
+    description: 'Izal Germicide 1L',
     photo_url: '/products/izal.svg'
   },
   {
@@ -57,7 +57,7 @@ export const DEMO_PRODUCTS = [
     stock: 40,
     active: true,
     is_sample: true,
-    description: 'Commercial 4L thick formula toilet cleaner. Dissolves stubborn limescale and deodorises ceramic bowls and urinals.',
+    description: 'Toilet Wash Cleaner 4L',
     photo_url: '/products/toilet-wash.svg'
   },
   {
@@ -69,7 +69,7 @@ export const DEMO_PRODUCTS = [
     stock: 80,
     active: true,
     is_sample: true,
-    description: 'Active cleaning formula toilet bowl descaler and stain remover for fresh, sanitary restrooms.',
+    description: 'Toilet Wash Cleaner 1L',
     photo_url: '/products/toilet-wash.svg'
   },
   {
@@ -81,7 +81,7 @@ export const DEMO_PRODUCTS = [
     stock: 90,
     active: true,
     is_sample: true,
-    description: 'Ultra-degreasing foaming dishwashing liquid. Tough on baked-on grease, gentle on hands, fresh citrus clean scent.',
+    description: 'Dishwash Liquid 1L',
     photo_url: '/products/dishwash.svg'
   },
   {
@@ -93,7 +93,7 @@ export const DEMO_PRODUCTS = [
     stock: 45,
     active: true,
     is_sample: true,
-    description: 'Antiseptic germicide and surface disinfectant. Formulated for high-touch surface hygiene.',
+    description: 'Dis-germ Disinfectant 500ml',
     photo_url: '/products/dis-germ.svg'
   },
   {
@@ -105,7 +105,7 @@ export const DEMO_PRODUCTS = [
     stock: 60,
     active: true,
     is_sample: true,
-    description: 'Compact personal and first-aid antiseptic disinfectant fluid for daily surface hygiene.',
+    description: 'Dis-germ Disinfectant 250ml',
     photo_url: '/products/dis-germ.svg'
   },
   {
@@ -117,7 +117,7 @@ export const DEMO_PRODUCTS = [
     stock: 35,
     active: true,
     is_sample: true,
-    description: 'Industrial-strength sodium hypochlorite bleaching liquid. Whitens fabrics, disinfects tile surfaces, and cleans washrooms.',
+    description: 'Multipurpose Bleach 4L',
     photo_url: '/products/bleach.svg'
   },
   {
@@ -129,7 +129,7 @@ export const DEMO_PRODUCTS = [
     stock: 75,
     active: true,
     is_sample: true,
-    description: 'Everyday household chlorine bleach for brilliant white laundry, stain elimination, and bathroom sanitation.',
+    description: 'Multipurpose Bleach 1L',
     photo_url: '/products/bleach.svg'
   }
 ];
@@ -209,16 +209,23 @@ export function escapeHtml(str) {
 }
 
 /**
- * Build prefilled WhatsApp URL for instant customer inquiry or ordering
+ * Build prefilled WhatsApp URL for customer order
  * @param {string} phone
- * @param {{ name: string, size?: string, price?: number|string }} product
+ * @param {{ name: string, size?: string, price_ngn?: number|string }} product
+ * @param {{ name?: string, phone?: string }} [customer]
  * @returns {string}
  */
-export function buildProductWhatsAppUrl(phone = BRAND.whatsapp, product = {}) {
+export function buildProductWhatsAppUrl(phone = BRAND.whatsapp, product = {}, customer = {}) {
   const cleanPhone = String(phone).replace(/\D/g, '');
   const productName = product.name || 'product';
-  const sizeText = product.size ? ` (${product.size})` : '';
+  const sizeText = product.size ? ` ${product.size}` : '';
   const priceText = product.price_ngn != null ? ` for ${formatPrice(product.price_ngn)}` : '';
-  const message = `Hello Geodeels, I would like to order ${productName}${sizeText}${priceText}. Please confirm delivery availability and payment details.`;
+  let message = `Hello Geodeels, I would like to order ${productName}${sizeText}${priceText}.`;
+  if (customer && (customer.name || customer.phone)) {
+    const details = [];
+    if (customer.name) details.push(`Name: ${customer.name}`);
+    if (customer.phone) details.push(`Phone: ${customer.phone}`);
+    message += ` ${details.join(', ')}.`;
+  }
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }

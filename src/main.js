@@ -8,7 +8,7 @@ import {
   escapeHtml,
   buildProductWhatsAppUrl
 } from './utils.js';
-import { fetchStorefrontProducts, isSupabaseConfigured } from './supabase.js';
+import { fetchStorefrontProducts, createShopOrder, isSupabaseConfigured } from './supabase.js';
 
 // SVG Icons (clean, high-contrast strokes)
 const ICONS = {
@@ -16,7 +16,6 @@ const ICONS = {
   clear: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`,
   whatsapp: `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.301-.15-1.782-.879-2.057-.98-.276-.1-.477-.15-.678.15-.201.301-.778.98-.954 1.18-.176.2-.352.226-.653.075-.301-.15-1.272-.469-2.423-1.496-.895-.798-1.5-1.785-1.676-2.086-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.176.201-.301.301-.502.1-.201.05-.377-.025-.527-.075-.15-.678-1.633-.929-2.237-.245-.588-.493-.508-.678-.518l-.578-.01c-.201 0-.527.075-.803.377-.276.301-1.054 1.03-1.054 2.512s1.079 2.913 1.23 3.114c.15.201 2.124 3.244 5.146 4.549.719.31 1.28.496 1.718.636.722.229 1.378.197 1.898.119.579-.088 1.782-.728 2.033-1.431.251-.703.251-1.306.176-1.431-.075-.126-.276-.201-.577-.351zm-5.467 7.426h-.005a9.882 9.882 0 0 1-5.034-1.378l-.361-.214-3.741.982 1-3.648-.235-.374a9.86 9.86 0 0 1-1.514-5.26c0-5.46 4.444-9.904 9.909-9.904 2.646 0 5.132 1.031 7.001 2.903a9.839 9.839 0 0 1 2.899 7.003c-.002 5.462-4.447 9.906-9.914 9.906zM20.52 3.484C18.257 1.22 15.245 0 12.005 0 5.44 0 .092 5.347.09 11.913a11.85 11.85 0 0 0 1.815 6.275L0 24l5.986-1.57a11.89 11.89 0 0 0 5.998 1.62h.005c6.564 0 11.913-5.348 11.915-11.915 0-3.182-1.24-6.195-3.384-8.651z"/></svg>`,
   shield: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`,
-  truck: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>`,
   check: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
   package: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`
 };
@@ -28,7 +27,8 @@ export const state = {
   searchQuery: '',
   isLoading: true,
   isDemo: false,
-  error: null
+  error: null,
+  orderModal: null // { product, customerName, customerPhone, error }
 };
 
 /**
@@ -57,7 +57,6 @@ function renderProductCards(products, isDemo) {
     .map((product) => {
       const photo = getProductPhoto(product);
       const isSample = isDemo || Boolean(product.is_sample);
-      const whatsAppUrl = buildProductWhatsAppUrl(BRAND.whatsapp, product);
 
       return `
         <article class="product-card" data-product-id="${escapeHtml(product.id)}">
@@ -83,28 +82,19 @@ function renderProductCards(products, isDemo) {
 
             <h2 class="product-title">${escapeHtml(product.name)}</h2>
 
-            <div class="product-size-desc">
-              <span>Size:</span>
-              <span class="size-pill-inline">${escapeHtml(product.size)}</span>
-            </div>
-
             <div class="product-price-row">
-              <div>
-                <span class="product-price">${escapeHtml(formatPrice(product.price_ngn))}</span>
-              </div>
-              <span class="price-subtext">Single flat price</span>
+              <span class="product-price">${escapeHtml(formatPrice(product.price_ngn))}</span>
             </div>
 
-            <a
-              href="${escapeHtml(whatsAppUrl)}"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="product-card-btn"
+            <button
+              type="button"
+              class="product-card-btn js-order-btn"
+              data-product-id="${escapeHtml(product.id)}"
               aria-label="Order ${escapeHtml(product.name)} ${escapeHtml(product.size)} on WhatsApp"
             >
               ${ICONS.whatsapp}
               <span>Order on WhatsApp</span>
-            </a>
+            </button>
           </div>
         </article>
       `;
@@ -162,7 +152,7 @@ export function renderApp() {
             />
             <div class="brand-text-block">
               <span class="brand-name">${BRAND.name}</span>
-              <span class="brand-tagline">Chemical &amp; Hygiene Solutions</span>
+              <span class="brand-tagline">${BRAND.tagline}</span>
             </div>
           </a>
 
@@ -187,10 +177,9 @@ export function renderApp() {
       <section class="hero-section" aria-label="Overview">
         <div class="hero-card">
           <div class="hero-content">
-            <span class="hero-eyebrow">Geodeels</span>
             <h1 class="hero-title">Hygiene &amp; Disinfectant Chemicals</h1>
             <p class="hero-desc">
-              Reliable cleaning and disinfectant chemicals for Nigerian households, offices, hotels, and businesses. Fixed factory pricing.
+              Reliable cleaning and disinfectant chemicals for Nigerian households and businesses.
             </p>
             <div class="hero-badges">
               <span class="hero-badge-item">${ICONS.check} Fixed factory pricing</span>
@@ -263,8 +252,6 @@ export function renderApp() {
             </h2>
             <span class="section-count">${filtered.length} ${filtered.length === 1 ? 'item' : 'items'}</span>
           </div>
-
-          <span class="pricing-promise">One Price For Everyone</span>
         </div>
 
         ${
@@ -295,7 +282,7 @@ export function renderApp() {
                   ? 'Try checking for spelling errors or clear your search query to see all available products.'
                   : state.isDemo
                   ? 'Try selecting "All" or a different category to view available sample chemical items.'
-                  : 'Our live inventory is currently restocking. You can preview our sample catalog (?demo=1) or contact our sales team directly.'
+                  : 'Our live inventory is currently restocking. You can preview our sample products or contact our sales team directly.'
               }
             </p>
             <div class="empty-state-actions">
@@ -306,7 +293,7 @@ export function renderApp() {
               }
               ${
                 !state.isDemo
-                  ? `<button type="button" class="btn-primary" id="activate-demo-btn">View Sample Catalog (?demo=1)</button>`
+                  ? `<button type="button" class="btn-primary" id="activate-demo-btn">View sample products</button>`
                   : ''
               }
               <a
@@ -337,8 +324,7 @@ export function renderApp() {
           <div class="footer-brand-col">
             <img src="/logo-geodeels.png" alt="Geodeels" class="footer-logo" width="36" height="36" />
             <p class="footer-copy">
-              <strong>${BRAND.name}</strong> • High-grade hygiene &amp; cleaning chemicals.<br />
-              Lagos, Nigeria.
+              <strong>${BRAND.name}</strong> • Lagos, Nigeria
             </p>
           </div>
           <div class="footer-links">
@@ -347,9 +333,145 @@ export function renderApp() {
         </div>
       </div>
     </footer>
+
+    <!-- Simple Order Sheet / Modal -->
+    ${
+      state.orderModal && state.orderModal.product
+        ? `
+      <div class="modal-backdrop" id="order-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="order-modal-title">
+        <div class="modal-sheet" id="order-modal-sheet">
+          <div class="modal-header">
+            <h2 id="order-modal-title" class="modal-title">Order on WhatsApp</h2>
+            <button type="button" class="modal-close-btn" id="close-modal-btn" aria-label="Close dialog">
+              ${ICONS.clear}
+            </button>
+          </div>
+
+          <form id="order-modal-form" class="modal-form" novalidate>
+            <div class="modal-product-summary">
+              <div class="modal-product-header">
+                <h3 class="modal-product-name">${escapeHtml(state.orderModal.product.name)}</h3>
+                <span class="modal-product-price" id="modal-price-display">
+                  ${escapeHtml(formatPrice(state.orderModal.product.price_ngn))}
+                </span>
+              </div>
+
+              <div class="modal-size-row">
+                <span class="modal-size-label">Size:</span>
+                <div class="modal-size-selector" role="group" aria-label="Select size">
+                  ${(() => {
+                    const variants = state.products.filter(
+                      (p) => p.name === state.orderModal.product.name
+                    );
+                    if (variants.length <= 1) {
+                      return `<span class="modal-size-pill static">${escapeHtml(
+                        state.orderModal.product.size
+                      )}</span>`;
+                    }
+                    return variants
+                      .map(
+                        (v) => `
+                      <button
+                        type="button"
+                        class="modal-size-pill ${v.id === state.orderModal.product.id ? 'active' : ''}"
+                        data-variant-id="${escapeHtml(v.id)}"
+                        aria-pressed="${v.id === state.orderModal.product.id}"
+                      >
+                        ${escapeHtml(v.size)}
+                      </button>
+                    `
+                      )
+                      .join('');
+                  })()}
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-fields">
+              <div class="form-group">
+                <label for="modal-customer-name" class="form-label">
+                  Your Name <span class="required-mark" aria-hidden="true">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="modal-customer-name"
+                  name="name"
+                  class="form-input"
+                  placeholder="e.g. Tunde Adebayo"
+                  value="${escapeHtml(state.orderModal.customerName || '')}"
+                  required
+                  autocomplete="name"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="modal-customer-phone" class="form-label">
+                  Phone Number <span class="required-mark" aria-hidden="true">*</span>
+                </label>
+                <input
+                  type="tel"
+                  id="modal-customer-phone"
+                  name="phone"
+                  class="form-input"
+                  placeholder="e.g. 08012345678"
+                  value="${escapeHtml(state.orderModal.customerPhone || '')}"
+                  required
+                  autocomplete="tel"
+                />
+              </div>
+
+              ${
+                state.orderModal.error
+                  ? `
+                <div class="modal-form-error" role="alert" id="modal-form-error">
+                  ${escapeHtml(state.orderModal.error)}
+                </div>
+              `
+                  : ''
+              }
+
+              <button type="submit" class="modal-submit-btn" id="modal-submit-btn">
+                ${ICONS.whatsapp}
+                <span>Continue to WhatsApp</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `
+        : ''
+    }
   `;
 
   attachEventHandlers();
+}
+
+/**
+ * Open the order sheet modal for a given product
+ */
+export function openOrderModal(product) {
+  if (!product) return;
+  state.orderModal = {
+    product,
+    customerName: '',
+    customerPhone: '',
+    error: ''
+  };
+  if (typeof document !== 'undefined') {
+    document.body.classList.add('modal-open');
+  }
+  renderApp();
+}
+
+/**
+ * Close the order sheet modal
+ */
+export function closeOrderModal() {
+  state.orderModal = null;
+  if (typeof document !== 'undefined') {
+    document.body.classList.remove('modal-open');
+  }
+  renderApp();
 }
 
 /**
@@ -426,6 +548,108 @@ function attachEventHandlers() {
       deactivateDemoMode();
     });
   }
+
+  // Order on WhatsApp card buttons
+  const orderBtns = document.querySelectorAll('.js-order-btn');
+  orderBtns.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const productId = btn.getAttribute('data-product-id');
+      const product = state.products.find((p) => p.id === productId);
+      if (product) {
+        openOrderModal(product);
+      }
+    });
+  });
+
+  // Order modal handlers
+  if (state.orderModal) {
+    const closeBtn = document.getElementById('close-modal-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        closeOrderModal();
+      });
+    }
+
+    const backdrop = document.getElementById('order-modal-backdrop');
+    if (backdrop) {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) {
+          closeOrderModal();
+        }
+      });
+    }
+
+    // Size switcher buttons inside modal
+    const sizePills = document.querySelectorAll('.modal-size-pill[data-variant-id]');
+    sizePills.forEach((pill) => {
+      pill.addEventListener('click', () => {
+        const variantId = pill.getAttribute('data-variant-id');
+        const variant = state.products.find((p) => p.id === variantId);
+        if (variant && state.orderModal) {
+          // Preserve typed inputs
+          const nameEl = document.getElementById('modal-customer-name');
+          const phoneEl = document.getElementById('modal-customer-phone');
+          if (nameEl) state.orderModal.customerName = nameEl.value;
+          if (phoneEl) state.orderModal.customerPhone = phoneEl.value;
+
+          state.orderModal.product = variant;
+          state.orderModal.error = '';
+          renderApp();
+        }
+      });
+    });
+
+    // Form submit
+    const orderForm = document.getElementById('order-modal-form');
+    if (orderForm) {
+      orderForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nameEl = document.getElementById('modal-customer-name');
+        const phoneEl = document.getElementById('modal-customer-phone');
+        const name = (nameEl ? nameEl.value : '').trim();
+        const phone = (phoneEl ? phoneEl.value : '').trim();
+
+        state.orderModal.customerName = name;
+        state.orderModal.customerPhone = phone;
+
+        if (!name || !phone) {
+          state.orderModal.error = 'Please enter both your name and phone number.';
+          renderApp();
+          const target = !name
+            ? document.getElementById('modal-customer-name')
+            : document.getElementById('modal-customer-phone');
+          if (target) target.focus();
+          return;
+        }
+
+        const selectedProduct = state.orderModal.product;
+
+        // Try to save order in Supabase without blocking the customer
+        try {
+          await createShopOrder({
+            customerName: name,
+            customerPhone: phone,
+            product: selectedProduct
+          });
+        } catch (err) {
+          console.warn('Could not save shop_order to Supabase (non-blocking):', err);
+        }
+
+        // WhatsApp link with customer details
+        const whatsAppUrl = buildProductWhatsAppUrl(BRAND.whatsapp, selectedProduct, {
+          name,
+          phone
+        });
+
+        // Open WhatsApp
+        window.open(whatsAppUrl, '_blank', 'noopener,noreferrer');
+
+        // Close modal
+        closeOrderModal();
+      });
+    }
+  }
 }
 
 function activateDemoMode() {
@@ -477,7 +701,6 @@ async function loadStorefrontData() {
   try {
     const { data, error } = await fetchStorefrontProducts();
     if (error || !data || data.length === 0) {
-      // Supabase has no rows yet or returned error: friendly empty state
       state.products = [];
       state.error = error;
     } else {
@@ -493,9 +716,20 @@ async function loadStorefrontData() {
   }
 }
 
+// Global keydown handler for Escape key closing modal
+if (typeof window !== 'undefined') {
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && state.orderModal) {
+      closeOrderModal();
+    }
+  });
+}
+
 // Expose state and render helper for debugging and headless Chrome testing
 window.__appState = state;
 window.__renderApp = renderApp;
+window.__openOrderModal = openOrderModal;
+window.__closeOrderModal = closeOrderModal;
 window.__loadStorefrontData = loadStorefrontData;
 
 // Bootstrap on DOM content loaded
@@ -507,9 +741,10 @@ if (typeof document !== 'undefined') {
   window.addEventListener('resize', () => {
     const input = document.getElementById('catalog-search');
     if (input) {
-      input.placeholder = window.innerWidth <= 640
-        ? 'Search Izal, bleach, dishwash...'
-        : 'Search Izal, bleach, dishwash, toilet wash...';
+      input.placeholder =
+        window.innerWidth <= 640
+          ? 'Search Izal, bleach, dishwash...'
+          : 'Search Izal, bleach, dishwash, toilet wash...';
     }
   });
 }

@@ -31,7 +31,7 @@
     <!-- Bottle Neck -->
     <rect x="185" y="86" width="30" height="25" fill="url(#dgLiquid)"/>
 
-    <!-- Antiseptic Oval Shouldered Bottle -->
+    <!-- Disinfectant Oval Shouldered Bottle -->
     <path d="M185 111 C155 120 142 145 142 180 L142 325 C142 342 155 350 172 350 L228 350 C245 350 258 342 258 325 L258 180 C258 145 245 120 215 111 Z" fill="url(#dgLiquid)"/>
 
     <!-- Light Sheen Reflection -->
@@ -48,6 +48,6 @@
     <rect x="188" y="212" width="24" height="12" rx="2" fill="#196C36"/>
 
     <text x="200" y="254" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="14" fill="#145C2E" text-anchor="middle">DIS-GERM</text>
-    <text x="200" y="272" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="9" fill="#4B5563" text-anchor="middle">ANTISEPTIC FLUID</text>
+    <text x="200" y="272" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="9" fill="#4B5563" text-anchor="middle">DISINFECTANT FLUID</text>
   </g>
 </svg>

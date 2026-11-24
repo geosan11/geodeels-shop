@@ -11,6 +11,7 @@ import {
   CATEGORIES,
   BRAND
 } from '../src/utils.js';
+import { createShopOrder } from '../src/supabase.js';
 
 describe('formatPrice', () => {
   it('formats whole numbers to standard Nigerian Naira currency format', () => {
@@ -91,7 +92,6 @@ describe('filterProducts', () => {
 
   it('filters accurately by category chip', () => {
     const disinfectants = filterProducts(DEMO_PRODUCTS, { category: 'Disinfectant' });
-    // Izal 4L, Izal 1L, Dis-germ 500ml, Dis-germ 250ml
     expect(disinfectants).toHaveLength(4);
 
     const toiletWashes = filterProducts(DEMO_PRODUCTS, { category: 'Toilet wash' });
@@ -140,7 +140,7 @@ describe('escapeHtml', () => {
 });
 
 describe('buildProductWhatsAppUrl', () => {
-  it('builds a prefilled WhatsApp link with product details', () => {
+  it('builds a prefilled WhatsApp link with product details and no delivery claims', () => {
     const url = buildProductWhatsAppUrl('2348000000000', {
       name: 'Izal Germicide',
       size: '4L',
@@ -150,8 +150,25 @@ describe('buildProductWhatsAppUrl', () => {
     expect(url).toContain('https://wa.me/2348000000000?text=');
     const decoded = decodeURIComponent(url.split('?text=')[1]);
     expect(decoded).toContain('Izal Germicide');
-    expect(decoded).toContain('(4L)');
+    expect(decoded).toContain('4L');
     expect(decoded).toContain('₦10,000');
+    expect(decoded.toLowerCase()).not.toContain('delivery');
+  });
+
+  it('includes customer name and phone when provided', () => {
+    const url = buildProductWhatsAppUrl(
+      '2348000000000',
+      { name: 'Dishwash Liquid', size: '1L', price_ngn: 2500 },
+      { name: 'Tunde Adebayo', phone: '08012345678' }
+    );
+
+    const decoded = decodeURIComponent(url.split('?text=')[1]);
+    expect(decoded).toContain('Dishwash Liquid');
+    expect(decoded).toContain('1L');
+    expect(decoded).toContain('₦2,500');
+    expect(decoded).toContain('Name: Tunde Adebayo');
+    expect(decoded).toContain('Phone: 08012345678');
+    expect(decoded.toLowerCase()).not.toContain('delivery');
   });
 });
 
@@ -171,18 +188,23 @@ describe('Brand specifications and true claims compliance', () => {
     expect(CATEGORIES).toContain('Bleach');
   });
 
-  it('enforces true claims only across demo catalog items', () => {
+  it('enforces true claims only across demo catalog items with plain descriptions', () => {
     DEMO_PRODUCTS.forEach((product) => {
       const desc = (product.description || '').toLowerCase();
       expect(desc).not.toContain('hospital-grade');
+      expect(desc).not.toContain('high-potency');
+      expect(desc).not.toContain('ultra-degreasing');
+      expect(desc).not.toContain('industrial-strength');
+      expect(desc).not.toContain('antiseptic');
       expect(desc).not.toContain('pure active ingredients');
       expect(desc).not.toContain('nationwide delivery');
       expect(desc).not.toContain('direct factory supply');
       expect(desc).not.toContain('factory-direct');
       expect(desc).not.toContain('99.9');
-      expect(desc).not.toContain('99.9% sanitising');
+      expect(desc).not.toContain('sanitis');
       expect(desc).not.toContain('kills');
-      expect(desc).not.toContain('pathogen');
+      expect(desc).not.toContain('clinic');
+      expect(desc).not.toContain('citrus');
       expect(product.size).not.toBe('25L');
     });
   });
@@ -200,76 +222,108 @@ describe('Brand specifications and true claims compliance', () => {
       expect(content.toLowerCase()).not.toContain('hospital-grade');
       expect(content.toLowerCase()).not.toContain('direct factory supply');
       expect(content.toLowerCase()).not.toContain('factory-direct');
+      expect(content.toLowerCase()).not.toContain('antiseptic');
       expect(content).not.toContain('3.5%');
     });
   });
 
-  it('ensures unconfirmed claims ("Direct factory supply", "Factory-direct sanitation") are absent from UI markup', () => {
-    const mainJsPath = path.resolve(__dirname, '../src/main.js');
-    const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
+  it('ensures banned claims are absent from UI markup and metadata', () => {
+    const mainJsContent = fs.readFileSync(path.resolve(__dirname, '../src/main.js'), 'utf8');
+    const indexHtmlContent = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
+    const utilsContent = fs.readFileSync(path.resolve(__dirname, '../src/utils.js'), 'utf8');
 
-    expect(mainJsContent).not.toContain('Direct factory supply');
-    expect(mainJsContent).not.toContain('Factory-Direct Sanitation');
-    expect(mainJsContent).not.toContain('Factory-direct');
-    expect(mainJsContent).not.toContain('99.9%');
-    expect(mainJsContent.toLowerCase()).not.toContain('hospital-grade');
+    const combined = `${mainJsContent}\n${indexHtmlContent}\n${utilsContent}`;
 
-    // Confirm required confirmed claims are preserved
-    expect(mainJsContent).toContain('Fixed factory pricing');
-    expect(mainJsContent).toContain('One price for everyone');
+    expect(combined).not.toContain('Direct factory supply');
+    expect(combined).not.toContain('Factory-Direct');
+    expect(combined).not.toContain('factory-direct');
+    expect(combined).not.toContain('hospital-grade');
+    expect(combined).not.toContain('High-grade');
+    expect(combined).not.toContain('high-potency');
+    expect(combined).not.toContain('industrial-strength');
+    expect(combined).not.toContain('ultra-degreasing');
+    expect(combined).not.toContain('antiseptic');
+    expect(combined).not.toContain('99.9%');
+    expect(combined.toLowerCase()).not.toContain('clinics');
+    expect(combined.toLowerCase()).not.toContain('delivery availability');
+
+    // Button label does not contain dev/internal query param
+    expect(mainJsContent).not.toContain('(?demo=1)</button>');
+    expect(mainJsContent).toContain('View sample products');
+
+    // Product card clutter removed
+    expect(mainJsContent).not.toContain('Single flat price');
+    expect(mainJsContent).not.toContain('hero-eyebrow');
   });
 
-  it('correctly pluralizes item counts', () => {
-    const pluralize = (count) => `${count} ${count === 1 ? 'item' : 'items'}`;
-    expect(pluralize(1)).toBe('1 item');
-    expect(pluralize(9)).toBe('9 items');
-    expect(pluralize(0)).toBe('0 items');
+  it('uses each allowed true claim exactly once in the storefront view', () => {
+    const mainJsContent = fs.readFileSync(path.resolve(__dirname, '../src/main.js'), 'utf8');
+
+    // "Fixed factory pricing" should occur exactly once in page template
+    const fixedPricingMatches = mainJsContent.match(/Fixed factory pricing/g) || [];
+    expect(fixedPricingMatches).toHaveLength(1);
+
+    // "One price for everyone" should occur exactly once (removed duplicate pricing-promise pill)
+    const onePriceMatches = mainJsContent.match(/One price for everyone/gi) || [];
+    expect(onePriceMatches).toHaveLength(1);
   });
 });
 
-describe('Shop P1 specification compliance', () => {
-  it('implements white hero card with neutral surface, dark text, and #196C36 accents', () => {
-    const stylePath = path.resolve(__dirname, '../src/style.css');
-    const styleContent = fs.readFileSync(stylePath, 'utf8');
-    const mainJsPath = path.resolve(__dirname, '../src/main.js');
-    const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
+describe('Simple order flow specifications', () => {
+  it('defines order sheet modal with required customer name and phone inputs', () => {
+    const mainJsContent = fs.readFileSync(path.resolve(__dirname, '../src/main.js'), 'utf8');
 
-    // Hero markup includes green-tint eyebrow and neutral trust badges
-    expect(mainJsContent).toContain('hero-eyebrow');
-    expect(mainJsContent).toContain('Fixed factory pricing');
-    expect(mainJsContent).toContain('One price for everyone');
+    // Order modal elements
+    expect(mainJsContent).toContain('order-modal-backdrop');
+    expect(mainJsContent).toContain('order-modal-sheet');
+    expect(mainJsContent).toContain('modal-customer-name');
+    expect(mainJsContent).toContain('modal-customer-phone');
+    expect(mainJsContent).toContain('modal-submit-btn');
 
-    // Hero CSS uses card background #FFFFFF, dark text #0F172A, #475569, and accent #196C36
-    expect(styleContent).toContain('.hero-card');
-    expect(styleContent).toContain('var(--color-card-bg, #FFFFFF)');
-    expect(styleContent).toContain('var(--color-text-main, #0F172A)');
-    expect(styleContent).toContain('var(--color-text-secondary, #475569)');
-    expect(styleContent).toContain('.hero-eyebrow');
-    expect(styleContent).toContain('var(--color-brand-primary, #196C36)');
+    // Enforces validation check
+    expect(mainJsContent).toContain('Please enter both your name and phone number.');
   });
 
-  it('implements slim slate #1E293B demo bar with single line on mobile', () => {
-    const stylePath = path.resolve(__dirname, '../src/style.css');
-    const styleContent = fs.readFileSync(stylePath, 'utf8');
-    const mainJsPath = path.resolve(__dirname, '../src/main.js');
-    const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
+  it('allows switching size variants in order modal when multiple sizes exist', () => {
+    const mainJsContent = fs.readFileSync(path.resolve(__dirname, '../src/main.js'), 'utf8');
+
+    // Size selector rendering
+    expect(mainJsContent).toContain('modal-size-selector');
+    expect(mainJsContent).toContain('modal-size-pill');
+    expect(mainJsContent).toContain('data-variant-id');
+  });
+
+  it('handles order insertion non-blockingly without throwing', async () => {
+    // Attempt insert when table does not exist or client returns error
+    const res = await createShopOrder({
+      customerName: 'Test Buyer',
+      customerPhone: '08000000000',
+      product: { id: 'sample-1', name: 'Izal', size: '1L', price_ngn: 4000 }
+    });
+
+    // Should return result object with data/error, never throws
+    expect(res).toBeDefined();
+    expect(typeof res).toBe('object');
+  });
+});
+
+describe('Design tokens and responsiveness compliance', () => {
+  it('maintains slim slate #1E293B demo bar and brand colors', () => {
+    const styleContent = fs.readFileSync(path.resolve(__dirname, '../src/style.css'), 'utf8');
 
     expect(styleContent).toContain('var(--color-demo-bar-bg, #1E293B)');
     expect(styleContent).toContain('var(--color-demo-bar-text, #F8FAFC)');
-    expect(mainJsContent).toContain('demo-banner-pill');
-    expect(mainJsContent).toContain('exit-demo-link');
-    expect(mainJsContent).toContain('Exit Demo');
+    expect(styleContent).toContain('--color-brand-primary: #196C36;');
+    expect(styleContent).toContain('--color-brand-hover: #145C2E;');
+    expect(styleContent).not.toContain('#166534');
   });
 
-  it('unifies catalog toolbar on desktop (>=1024px) for search and category chips in one row', () => {
-    const stylePath = path.resolve(__dirname, '../src/style.css');
-    const styleContent = fs.readFileSync(stylePath, 'utf8');
-    const mainJsPath = path.resolve(__dirname, '../src/main.js');
-    const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
+  it('includes styles for bottom sheet modal on mobile and dialog on desktop', () => {
+    const styleContent = fs.readFileSync(path.resolve(__dirname, '../src/style.css'), 'utf8');
 
-    expect(mainJsContent).toContain('catalog-toolbar');
-    expect(styleContent).toContain('@media (min-width: 1024px)');
-    expect(styleContent).toContain('.catalog-toolbar');
-    expect(styleContent).toContain('flex-direction: row');
+    expect(styleContent).toContain('.modal-backdrop');
+    expect(styleContent).toContain('.modal-sheet');
+    expect(styleContent).toContain('body.modal-open');
+    expect(styleContent).toContain('.modal-submit-btn');
   });
 });
