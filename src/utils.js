@@ -45,7 +45,7 @@ export const DEMO_PRODUCTS = [
     stock: 65,
     active: true,
     is_sample: true,
-    description: 'Household-size germicidal disinfectant fluid. Kills 99.9% of germs on floors, drains, and outdoor surrounds.',
+    description: 'Household-size germicidal disinfectant fluid for floors, drains, and outdoor surrounds.',
     photo_url: '/products/izal.svg'
   },
   {
@@ -57,7 +57,7 @@ export const DEMO_PRODUCTS = [
     stock: 40,
     active: true,
     is_sample: true,
-    description: 'Commercial 4L thick formula toilet cleaner. Dissolves stubborn limescale, kills germs, and deodorises ceramic bowls and urinals.',
+    description: 'Commercial 4L thick formula toilet cleaner. Dissolves stubborn limescale and deodorises ceramic bowls and urinals.',
     photo_url: '/products/toilet-wash.svg'
   },
   {
@@ -93,7 +93,7 @@ export const DEMO_PRODUCTS = [
     stock: 45,
     active: true,
     is_sample: true,
-    description: 'Hospital-grade antiseptic germicide and surface disinfectant. Formulated for high-touch surface hygiene.',
+    description: 'Antiseptic germicide and surface disinfectant. Formulated for high-touch surface hygiene.',
     photo_url: '/products/dis-germ.svg'
   },
   {
@@ -105,7 +105,7 @@ export const DEMO_PRODUCTS = [
     stock: 60,
     active: true,
     is_sample: true,
-    description: 'Compact personal/first-aid antiseptic disinfectant fluid for instant pathogen neutralisation.',
+    description: 'Compact personal and first-aid antiseptic disinfectant fluid for daily surface hygiene.',
     photo_url: '/products/dis-germ.svg'
   },
   {
@@ -117,7 +117,7 @@ export const DEMO_PRODUCTS = [
     stock: 35,
     active: true,
     is_sample: true,
-    description: 'Industrial-strength sodium hypochlorite bleaching liquid. Whitens fabrics, disinfects tile surfaces, and sterilises washrooms.',
+    description: 'Industrial-strength sodium hypochlorite bleaching liquid. Whitens fabrics, disinfects tile surfaces, and cleans washrooms.',
     photo_url: '/products/bleach.svg'
   },
   {

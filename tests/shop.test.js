@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   formatPrice,
   DEMO_PRODUCTS,
@@ -153,11 +155,12 @@ describe('buildProductWhatsAppUrl', () => {
   });
 });
 
-describe('Brand specifications', () => {
+describe('Brand specifications and true claims compliance', () => {
   it('uses the brand name Geodeels with an s', () => {
     expect(BRAND.name).toBe('Geodeels');
     expect(BRAND.primaryGreen).toBe('#196C36');
     expect(BRAND.darkGreen).toBe('#145C2E');
+    expect(BRAND.primaryGreen).not.toBe('#166534');
   });
 
   it('has categories matching customer shop requirements', () => {
@@ -166,5 +169,60 @@ describe('Brand specifications', () => {
     expect(CATEGORIES).toContain('Toilet wash');
     expect(CATEGORIES).toContain('Dishwash');
     expect(CATEGORIES).toContain('Bleach');
+  });
+
+  it('enforces true claims only across demo catalog items', () => {
+    DEMO_PRODUCTS.forEach((product) => {
+      const desc = (product.description || '').toLowerCase();
+      expect(desc).not.toContain('hospital-grade');
+      expect(desc).not.toContain('pure active ingredients');
+      expect(desc).not.toContain('nationwide delivery');
+      expect(desc).not.toContain('direct factory supply');
+      expect(desc).not.toContain('factory-direct');
+      expect(desc).not.toContain('99.9');
+      expect(desc).not.toContain('99.9% sanitising');
+      expect(desc).not.toContain('kills');
+      expect(desc).not.toContain('pathogen');
+      expect(product.size).not.toBe('25L');
+    });
+  });
+
+  it('ensures product SVG label artwork is free of unconfirmed marketing and efficacy claims', () => {
+    const svgDir = path.resolve(__dirname, '../public/products');
+    const svgFiles = fs.readdirSync(svgDir).filter((file) => file.endsWith('.svg'));
+    expect(svgFiles.length).toBeGreaterThanOrEqual(5);
+
+    svgFiles.forEach((file) => {
+      const content = fs.readFileSync(path.join(svgDir, file), 'utf8');
+      expect(content).not.toContain('99.9');
+      expect(content).not.toContain('99.9%');
+      expect(content.toLowerCase()).not.toContain('sanitising');
+      expect(content.toLowerCase()).not.toContain('hospital-grade');
+      expect(content.toLowerCase()).not.toContain('direct factory supply');
+      expect(content.toLowerCase()).not.toContain('factory-direct');
+      expect(content).not.toContain('3.5%');
+    });
+  });
+
+  it('ensures unconfirmed claims ("Direct factory supply", "Factory-direct sanitation") are absent from UI markup', () => {
+    const mainJsPath = path.resolve(__dirname, '../src/main.js');
+    const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
+
+    expect(mainJsContent).not.toContain('Direct factory supply');
+    expect(mainJsContent).not.toContain('Factory-Direct Sanitation');
+    expect(mainJsContent).not.toContain('Factory-direct');
+    expect(mainJsContent).not.toContain('99.9%');
+    expect(mainJsContent.toLowerCase()).not.toContain('hospital-grade');
+
+    // Confirm required confirmed claims are preserved
+    expect(mainJsContent).toContain('Fixed factory pricing');
+    expect(mainJsContent).toContain('One price for everyone');
+  });
+
+  it('correctly pluralizes item counts', () => {
+    const pluralize = (count) => `${count} ${count === 1 ? 'item' : 'items'}`;
+    expect(pluralize(1)).toBe('1 item');
+    expect(pluralize(9)).toBe('9 items');
+    expect(pluralize(0)).toBe('0 items');
   });
 });

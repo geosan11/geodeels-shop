@@ -64,7 +64,7 @@ function renderProductCards(products, isDemo) {
           <div class="product-image-container">
             ${
               isSample
-                ? `<span class="sample-badge"><span class="sample-dot" aria-hidden="true"></span>Sample</span>`
+                ? `<span class="sample-badge"><span class="sample-dot" aria-hidden="true"></span>Demo Item</span>`
                 : ''
             }
             <span class="size-tag">${escapeHtml(product.size)}</span>
@@ -125,6 +125,10 @@ export function renderApp() {
   });
 
   const demoQueryString = state.isDemo ? '?demo=1' : '';
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 640;
+  const searchPlaceholder = isMobile
+    ? 'Search Izal, bleach, dishwash...'
+    : 'Search Izal, bleach, dishwash, toilet wash...';
 
   appEl.innerHTML = `
     <!-- Demo Mode Top Banner -->
@@ -134,7 +138,7 @@ export function renderApp() {
       <div class="demo-banner" role="status" aria-live="polite">
         <div class="demo-banner-content">
           <span class="demo-banner-pill">Demo Mode</span>
-          <span>Showing 9 sample catalog products for testing. These are not live inventory.</span>
+          <span>Showing ${state.products.length} sample catalog ${state.products.length === 1 ? 'item' : 'items'} for testing. These are not live inventory.</span>
         </div>
         <a href="/" class="demo-banner-exit" id="exit-demo-link" aria-label="Switch to live store">Exit Demo</a>
       </div>
@@ -151,8 +155,8 @@ export function renderApp() {
               src="/logo-geodeels.png"
               alt="Geodeels Logo"
               class="brand-logo-img"
-              width="42"
-              height="42"
+              width="40"
+              height="40"
             />
             <div class="brand-text-block">
               <span class="brand-name">${BRAND.name}</span>
@@ -161,24 +165,15 @@ export function renderApp() {
           </a>
 
           <div class="header-actions">
-            <button
-              type="button"
-              class="demo-toggle-btn ${state.isDemo ? 'active' : ''}"
-              id="toggle-demo-btn"
-              aria-label="${state.isDemo ? 'Switch to live data mode' : 'View demo catalog with sample products'}"
-            >
-              ${state.isDemo ? 'Demo Mode Active' : 'Sample Catalog'}
-            </button>
-
             <a
-              href="https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hello Geodeels, I would like to inquire about your chemical products.')}"
+              href="https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hello Geodeels, I would like to order hygiene and cleaning chemicals.')}"
               target="_blank"
               rel="noopener noreferrer"
               class="header-whatsapp-btn"
-              aria-label="Contact Geodeels Sales on WhatsApp"
+              aria-label="Order on WhatsApp"
             >
               ${ICONS.whatsapp}
-              <span>Contact</span>
+              <span>Order on WhatsApp</span>
             </a>
           </div>
         </div>
@@ -191,17 +186,15 @@ export function renderApp() {
         <div class="hero-card">
           <div class="hero-content">
             <div class="hero-pill">
-              ${ICONS.shield}
-              <span>Professional Grade Sanitation</span>
+              <span>Geodeels</span>
             </div>
-            <h1 class="hero-title">Factory-Direct Hygiene &amp; Disinfectant Chemicals</h1>
+            <h1 class="hero-title">Hygiene &amp; Disinfectant Chemicals</h1>
             <p class="hero-desc">
-              Reliable, hospital-grade cleaning chemicals for Nigerian households, offices, hotels, hospitals, and cleaning contractors. One honest price for everyone.
+              Reliable cleaning and disinfectant chemicals for Nigerian households, offices, hotels, and businesses. Fixed factory pricing.
             </p>
             <div class="hero-badges">
-              <span class="hero-badge-item">${ICONS.check} Pure Active Ingredients</span>
-              <span class="hero-badge-item">${ICONS.check} Bulk &amp; Single Units</span>
-              <span class="hero-badge-item">${ICONS.truck} Lagos &amp; Nationwide Delivery</span>
+              <span class="hero-badge-item">${ICONS.check} Fixed factory pricing</span>
+              <span class="hero-badge-item">${ICONS.check} One price for everyone</span>
             </div>
           </div>
         </div>
@@ -215,7 +208,7 @@ export function renderApp() {
             type="search"
             id="catalog-search"
             class="search-input"
-            placeholder="Search Izal, toilet wash, dishwash, bleach, sizes..."
+            placeholder="${searchPlaceholder}"
             value="${escapeHtml(state.searchQuery)}"
             aria-label="Search chemical products"
           />
@@ -342,7 +335,7 @@ export function renderApp() {
             <img src="/logo-geodeels.png" alt="Geodeels" class="footer-logo" width="36" height="36" />
             <p class="footer-copy">
               <strong>${BRAND.name}</strong> • High-grade hygiene &amp; cleaning chemicals.<br />
-              Lagos, Nigeria • Direct wholesale &amp; household supply.
+              Lagos, Nigeria.
             </p>
           </div>
           <div class="footer-links">
@@ -506,5 +499,14 @@ window.__loadStorefrontData = loadStorefrontData;
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
     loadStorefrontData();
+  });
+
+  window.addEventListener('resize', () => {
+    const input = document.getElementById('catalog-search');
+    if (input) {
+      input.placeholder = window.innerWidth <= 640
+        ? 'Search Izal, bleach, dishwash...'
+        : 'Search Izal, bleach, dishwash, toilet wash...';
+    }
   });
 }
